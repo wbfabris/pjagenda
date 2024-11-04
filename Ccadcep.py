@@ -1,47 +1,89 @@
-#Class:     Cmedcep
-#Obejtivo:  Acessa os correios e pega o cep
-#Data:      Junho/2021
-#Input:     Passa o cep
-#Process:   Gera uma lista com enderço, Bairro, cidade, UF
-#OutPut:    Retorna a lista
-#================================================================
-import  pycep_correios #import get_address_from_cep, is_valid_cep, WebService
-#import pycep_correios
-#from pycep_correios.exceptions import CEPNotFound, InvalidCEP
+# Class:     Cmedcep
+# Obejtivo:  Acessa os correios e pega o cep
+# Data:      Junho/2021
+# Input:     Passa o cep
+# Process:   Gera uma lista com enderço, Bairro, cidade, UF
+# OutPut:    Retorna a lista
+# ================================================================
 
-class Obterend():
+import requests
 
-    """[recebe o cep e retorna o endereço]
-    """
-    def __init__(self,  pcep):
+
+class Obterend:
+    """[recebe o cep e retorna o endereço]"""
+
+    def __init__(self, pcep):
         """__init__ [Recebe o str com 8 digitos]
         Args:
             pcep ([str]): [numero do cep]
         """
         self.pcep = pcep
 
-    #_________________________________________
+    # _________________________________________
     def pxobterend(self):
-
-        """pxobterend [passa o cep e recebe uma lista]
+        """pxobterend [recebe o self.pcep e retorna um dicionario]
         Returns:
-            [list]: [logradouro, cidade, bairro, uf e o cep]
-                    ['bairro':, 'cep':, 'cidade':, 'logradouro':, 'uf':]
+            [dict]: {"cep": "01001-000", "logradouro": "Praça da Sé",  "complemento": "lado ímpar",
+        "unidade": "", "bairro": "Sé", "localidade": "São Paulo", "uf": "SP", "estado": "São Paulo",
+        "regiao": "Sudeste", "ibge": "3550308", "gia": "1004", "ddd": "11", "siafi": "7107"}
         """
-        pass 
-        # try:
-        #     endereco = pycep_correios.get_address_from_cep(self.pcep)
-        #     return endereco
 
-        # except CEPNotFound as ecnf:
-        #     return {'logradouro': 'CEP Não Cadastrado'}
+        dict_requisicao = {}
 
-        # except InvalidCEP as ecinv:
-        #     return {'logradouro': 'CEP invalido'}
+        if len(self.pcep) == 8:
+            link = f"https://viacep.com.br/ws/{self.pcep}/json/"
+            requisicao = requests.get(link)
+            print(requisicao)
 
-#++++++++++++++++++++++++++++++++++++++++++
-#ocep = Obterend('59020-310')
-#lsend = ocep.pxobterend()
+            if str(requisicao) == "<Response [200]>":
+                if str(requisicao.json()) == str("{'erro': 'true'}"):
+                    dict_requisicao = pxcriaarqjson(
+                        self.pcep, "Não há dados a serem exibidos"
+                    )
+
+                else:
+                    dict_requisicao = requisicao.json()
+
+            else:
+                print("Cep Invalido, {self.pcep}")
+                dict_requisicao = pxcriaarqjson(self.pcep, "CEP invalido")
+
+        else:
+            print(f"Tamanho do Cep Inválido, {len(self.pcep)}")
+            dict_requisicao = pxcriaarqjson(
+                self.pcep, "Tamanho do Cep Inválido"
+            )
+
+        return dict(dict_requisicao)
+
+
+def pxcriaarqjson(cep, ptexto):
+
+    # Dicionário de dados com logradouro contendo "erro1"
+    dados = {
+        "cep": cep,
+        "logradouro": ptexto,
+        "complemento": "",
+        "bairro": "",
+        "localidade": "",
+        "uf": "",
+        "ibge": "",
+        "gia": "",
+        "ddd": "",
+        "siafi": "",
+    }
+
+    # # Salvando o dicionário em um arquivo JSON
+    # with open("endereco_com_erro.json", "w", encoding="utf-8") as arquivo_json:
+    #     json.dump(dados, arquivo_json, ensure_ascii=False, indent=4)
+    # print("Arquivo JSON criado com sucesso!")
+
+    return dados
+
+
+# ++++++++++++++++++++++++++++++++++++++++++
+# ocep = Obterend('59020-310')
+# lsend = ocep.pxobterend()
 # = 1
 # if lsend['logradouro'] == 'CEP invalido':
 #     print('Cep invalido')
@@ -49,31 +91,10 @@ class Obterend():
 #      print('Cep OK')
 
 # a=1
-ocep = Obterend('28625000')
-lsend = ocep.pxobterend()
-aaa=1
-#pxmain('28625000')
-#pxmain('37503130')
+# pxmain('37503130')
 # print(endereco['cep'])
 # print(endereco['logradouro'])
 # print(endereco['bairro'])
 # print(endereco['cidade'])
 # print(endereco['uf'])
 # print(endereco['cep'])
-
-def consultar_cep(cep):
-    # Valida o formato do CEP
-    if is_valid_cep(cep):
-        try:
-            # Consulta o CEP usando o serviço 'APICEP'
-            endereco = get_address_from_cep(cep, webservice=WebService.APICEP)
-            print(f"Informações do CEP {cep}:")
-            print(endereco)
-        except Exception as e:
-            print(f"Erro ao consultar o CEP {cep}: {e}")
-    else:
-        print(f"O CEP {cep} é inválido.")
-
-# Exemplo de uso
-cep = '01001-000'  # Insira o CEP desejado aqui
-consultar_cep(cep)
